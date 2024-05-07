@@ -1,0 +1,36 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: AzureKeyVault@2
+  displayName: Get Secrets from Key Vault
+  inputs:
+    azureSubscription: 'Azure subscription 1(005ccd00-654a-48a2-a3ef-ee990b504e9b)'
+    KeyVaultName: 'project4az'
+
+    SecretsFilter: '*' # 'APIkey'
+    RunAsPreJob: false
+
+- task: CmdLine@2
+  displayName: Write Secret into File
+  inputs:
+    script: |
+      echo $(APIkey)
+      echo $(APIkey) > secret.txt
+      cat secret.txt
+
+- task: CopyFiles@2
+  displayName: Copy Secrets File
+  inputs:
+    Contents: secret.txt
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Secrets File
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
